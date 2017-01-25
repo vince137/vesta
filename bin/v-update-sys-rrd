@@ -120,6 +120,9 @@ for period in $periods; do
         $BIN/v-update-sys-rrd-ftp $period >/dev/null 2>&1
     fi
 
+    # Updating node
+   $BIN/v-update-sys-rrd-node $period > /dev/null 2>&1
+
     # Updating db stats
     if [ ! -z "$DB_SYSTEM" ] && [ "$DB_SYSTEM" != 'no' ]; then
         for type in ${DB_SYSTEM//,/ }; do

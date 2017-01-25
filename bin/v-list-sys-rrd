@@ -26,8 +26,8 @@ json_list() {
     DATE=$(echo "$time_n_date" |cut -f 2 -d \ )
 
     for type in $rrd_types; do
-        for rrd in $(ls $RRD/$type |grep rrd$ |sed "s/\.rrd$//g"); do
-            if [ "$i" -ne 1 ]; then
+        for rrd in $(ls $RRD/$type |grep rrd$ |sed "s/\.rrd$//g"); do            
+	    if [ "$i" -ne 1 ]; then
                 echo -e "\t},"
             fi
             if [ "$type" = 'la' ]; then
@@ -36,6 +36,9 @@ json_list() {
             if [ "$type" = 'mem' ]; then
                 title="Memory Usage"
             fi
+	    if [ "$type" = 'node' ]; then
+	    	title="Node Usage"
+	    fi
             if [ "$type" = 'net' ]; then
                 title="Bandwidth Usage $rrd"
             fi
@@ -121,7 +124,7 @@ csv_list() {
 #----------------------------------------------------------#
 
 # Definng rrd charts
-rrd_types="la mem net"
+rrd_types="la mem node net"
 
 # Checking web system
 if [ ! -z "$WEB_SYSTEM" ]; then
@@ -145,6 +148,8 @@ fi
 
 # Adding ssh
 rrd_types="$rrd_types ssh"
+
+
 
 # Listing data
 case $format in
