@@ -40,8 +40,8 @@ fi
 if [ ! -e "$RRD/node/node.rrd" ]; then
     # Adding database
     rrdtool create $RRD/node/node.rrd --step $RRD_STEP \
-        DS:NODEUSAGE:GAUGE:600:U:U \
-        DS:NODEMEM:GAUGE:600:U:U \
+        DS:nuse:GAUGE:600:U:U \
+        DS:nmem:GAUGE:600:U:U \
 	RRA:AVERAGE:0.5:1:600 \
         RRA:AVERAGE:0.5:6:700 \
         RRA:AVERAGE:0.5:24:775 \
@@ -50,12 +50,15 @@ if [ ! -e "$RRD/node/node.rrd" ]; then
         RRA:MAX:0.5:6:700 \
         RRA:MAX:0.5:24:775 \
         RRA:MAX:0.5:288:797
+
 fi
 
 # Parsing data
 if [ "$period" = 'daily' ]; then
-    NODEMEM=$(ps auxh | grep " node " | grep -v grep | tr -s ' ' | cut -d' ' -f4)
-    NODEPROC=$(ps auxh | grep " node " |grep -v grep | tr -s ' ' | cut -d' ' -f3)
+    PS=$(top -b -n 1 -p $(pgrep -d',' -f node) | grep "node")
+    NODEMEM=$(echo "$PS" | sed s/,/\./g | awk {'print $10'}) 
+    NODEPROC=$(echo "$PS" | sed s/,/\./g |  awk {'print $9'})
+
     # Updating rrd database
     rrdtool update $RRD/node/node.rrd N:$NODEPROC:$NODEMEM
 fi
@@ -78,8 +81,8 @@ rrdtool graph $RRD/node/$period-node.png \
     -c "MGRID#AAAAAA" \
     -c "FRAME#302c2d" \
     -c "ARROW#FFFFFF" \
-    DEF:NODEUSAGE=$RRD/node/node.rrd:NODEUSAGE:AVERAGE \
-    DEF:NODEMEM=$RRD/node/node.rrd:NODEMEM:AVERAGE \
+    DEF:NODEUSAGE=$RRD/node/node.rrd:nuse:AVERAGE \
+    DEF:NODEMEM=$RRD/node/node.rrd:nmem:AVERAGE \
     LINE1:NODEUSAGE#fefda0:"% CPU " \
     GPRINT:NODEUSAGE:'LAST:Current\:''%8.0lf' \
     GPRINT:NODEUSAGE:'MIN:Min\:''%8.0lf' \
@@ -90,11 +93,9 @@ rrdtool graph $RRD/node/$period-node.png \
     GPRINT:NODEMEM:'MIN:Min\:''%8.0lf' \
     GPRINT:NODEMEM:'MAX:Max\:''%8.0lf\j' &>/dev/null; result=$?
 
-
 #----------------------------------------------------------#
 #                       Vesta                              #
 #----------------------------------------------------------#
-
 if [ "$result" -ne 0 ]; then
     exit $E_RRD
 fi
