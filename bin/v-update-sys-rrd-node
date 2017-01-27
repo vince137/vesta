@@ -58,9 +58,19 @@ if [ "$period" = 'daily' ]; then
     PS=$(top -b -n 1 -p $(pgrep -d',' -f node) | grep "node")
     NODEMEM=$(echo "$PS" | sed s/,/\./g | awk {'print $10'}) 
     NODEPROC=$(echo "$PS" | sed s/,/\./g |  awk {'print $9'})
+	
+    memUsed=0;
+    for ligne in $NODEMEM; do
+      memUsed=`echo $ligne + $memUsed | bc`
+    done
 
+    procUsed=0;
+    for ligne in $NODEPROC; do
+       procUsed=`echo $ligne + $procUsed | bc`
+    done
+    
     # Updating rrd database
-    rrdtool update $RRD/node/node.rrd N:$NODEPROC:$NODEMEM
+    rrdtool update $RRD/node/node.rrd N:$procUsed:$memUsed
 fi
 
 # Updating rrd graph
